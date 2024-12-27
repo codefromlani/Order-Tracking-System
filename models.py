@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, Text, Float, ForeignKey
+from sqlalchemy import Column, Integer, String, DateTime, Text, Float, ForeignKey, Boolean
 from database import Base
 from sqlalchemy import Enum as SQLAlchemyEnum
 from enum import Enum
@@ -129,6 +129,17 @@ class Invoice(Base):
 
     def __repr__(self):
         return f"<Invoice(order_id={self.order_id}, amount={self.amount})>"
+
+
+class User(Base):
+    __tablename__ = "users"
+    id = Column(Integer, primary_key=True, index=True)
+    username = Column(String, unique=True, index=True)
+    password = Column(String)
+    is_active = Column(Boolean, default=True)
+
+    def __repr__(self):
+        return f"<User(username={self.username})>"
 
 
 class OrderProduct(Base):
