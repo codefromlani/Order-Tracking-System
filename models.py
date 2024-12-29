@@ -13,6 +13,7 @@ class Vendor(Base):
     email = Column(String, unique=True, nullable=False, index=True)
     phone_number = Column(String)
     address = Column(String)
+    type = Column(String)
 
     products = relationship("Product", back_populates="vendor")
 
@@ -24,8 +25,10 @@ class Product(Base):
     __tablename__ = "products"
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String,unique=True, nullable=False, index=True)
+    description = Column(String)
     price = Column(Float, nullable=False)
     stock = Column(Integer, default=0)
+    category = Column(String)
     vender_id = Column(Integer, ForeignKey("vendors.id"), nullable=False)
 
     vendor = relationship("Vendor", back_populates="products")
@@ -144,6 +147,7 @@ class User(Base):
 
 class OrderProduct(Base):
     __tablename__ = "order_product"
+    id = Column(Integer, primary_key=True, index=True)
     order_id = Column(Integer, ForeignKey("orders.id"), nullable=False)
     product_id = Column(Integer, ForeignKey("products.id"), nullable=False)
     quantity = Column(Integer, default=1, nullable=False)
