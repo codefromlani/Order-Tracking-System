@@ -29,12 +29,12 @@ class Product(Base):
     price = Column(Float, nullable=False)
     stock = Column(Integer, default=0)
     category = Column(String)
-    vender_id = Column(Integer, ForeignKey("vendors.id"), nullable=False)
+    vendor_id = Column(Integer, ForeignKey("vendors.id"), nullable=False)
 
     vendor = relationship("Vendor", back_populates="products")
 
     def __repr__(self):
-        return f"<Product(name={self.name}, price={self.price}, vendor_id={self.vender_id})>"
+        return f"<Product(name={self.name}, price={self.price}, vendor_id={self.vendor_id})>"
 
 class Client(Base):
     __tablename__ = "clients"
