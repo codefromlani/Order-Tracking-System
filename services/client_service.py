@@ -88,10 +88,8 @@ def client_order_history(client_id: int, db: Session) -> List[schemas.ClientOrde
     
     result = []
     for order in orders:
-        # Extract products from order_product relationship
         products = [op.product for op in order.order_product]
         
-        # Create response object
         order_response = schemas.ClientOrderResponse(
             id=order.id,
             status=order.status,
