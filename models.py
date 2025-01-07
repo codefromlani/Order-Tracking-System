@@ -67,9 +67,20 @@ class Order(Base):
     client = relationship("Client", back_populates="orders")
     shipments = relationship("Shipment", back_populates="order")
     invoices = relationship("Invoice", back_populates="order")
+    history = relationship("OrderHistory", back_populates="order")
 
     def __repr__(self):
         return f"<Order(client_id={self.client_id}, status={self.status}, total_amount={self.total_amount})>"
+    
+
+class OrderHistory(Base):
+    __tablename__ = "order_history"
+    id = Column(Integer, primary_key=True, index=True)
+    order_id = Column(Integer, ForeignKey("orders.id"), nullable=False)
+    status = Column(SQLAlchemyEnum(OrderStatusEnum), nullable=False)
+    changed_at = Column(DateTime, default=datetime.utcnow)  
+
+    order = relationship("Order", back_populates="history")  
 
 
 class ExpensecategoryEnum(str, Enum):
