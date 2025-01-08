@@ -51,6 +51,7 @@ class Client(Base):
 
 class OrderStatusEnum(str, Enum):
     PENDING = "pending"
+    APPROVED = "approved" 
     SHIPPED = "shipped"
     DELIVERED = "delivered"
     CANCELLED = "cancelled"
@@ -81,6 +82,9 @@ class OrderHistory(Base):
     changed_at = Column(DateTime, default=datetime.utcnow)  
 
     order = relationship("Order", back_populates="history")  
+
+    def __repr__(self):
+        return f"<Order(status={self.status}, changed_at={self.changed_at})>"
 
 
 class ExpensecategoryEnum(str, Enum):
