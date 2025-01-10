@@ -1,21 +1,15 @@
 from fastapi import APIRouter, Depends, status
 from services import order_service, payment_service
 from sqlalchemy.orm import Session
-from typing import List
+from typing import List, Optional
 from database import get_db
 import schemas
+import models
 
 
 router = APIRouter(
     tags=["Order"]
 )
-
-@router.post("/orders/", status_code=status.HTTP_201_CREATED)
-def create_order(
-    order: schemas.OrderCreate,
-    db: Session = Depends(get_db)
-):
-    return order_service.create_order(db=db, order=order)
 
 @router.get("/orders/", response_model=List[schemas.OrderResponse])
 def get_orders(
@@ -25,6 +19,13 @@ def get_orders(
 ):
     return order_service.get_orders(db=db, skip=skip, limit=limit)
 
+@router.post("/orders/", status_code=status.HTTP_201_CREATED)
+def create_order(
+    order: schemas.OrderCreate,
+    db: Session = Depends(get_db)
+):
+    return order_service.create_order(db=db, order=order)
+
 @router.put("/order/{order_id}/product/", response_model=schemas.OrderResponse)
 def edit_order(
     order_id: int,
@@ -32,6 +33,14 @@ def edit_order(
     db: Session = Depends(get_db)
 ):
     return order_service.edit_order(order_id=order_id, order_update=order_update, db=db)
+
+@router.post("/orders/{order_id}/confirm_payment")
+def confirm_payment(
+    order_id: int, 
+    payment_intent_id: str, 
+    db: Session = Depends(get_db)
+):
+    return payment_service.update_order_status_to_approved(order_id=order_id, payment_intent_id=payment_intent_id, db=db)
 
 @router.put("/orders/{order_id}/manual_status/")
 def manual_update_order_status(
@@ -48,18 +57,11 @@ def track_order_status(
 ):
     return order_service.track_order_status(db=db, order_id=order_id)
 
-@router.get("/order_history/")
+@router.get("/orders/order_history/")
 def orders_history(
     db: Session = Depends(get_db),
     skip: int = 0,
-    limit: int = 10
+    limit: int = 10, 
+    order_id: Optional[int] = None
 ):
-    return order_service.orders_history(db=db, skip=skip, limit=limit)
-
-@router.post("/orders/{order_id}/confirm_payment")
-def confirm_payment(
-    order_id: int, 
-    payment_intent_id: str, 
-    db: Session = Depends(get_db)
-):
-    return payment_service.update_order_status_to_approved(order_id=order_id, payment_intent_id=payment_intent_id, db=db)
+    return order_service.orders_history(db=db, skip=skip, limit=limit, order_id=order_id)
