@@ -64,6 +64,7 @@ class Order(Base):
     status = Column(SQLAlchemyEnum(OrderStatusEnum), nullable=False, index=True, default=OrderStatusEnum.PENDING)
     created_at = Column(DateTime, default=datetime.utcnow)
     total_amount = Column(Float, nullable=False)
+    payment_intent_id = Column(String)
 
     client = relationship("Client", back_populates="orders")
     shipments = relationship("Shipment", back_populates="order")
