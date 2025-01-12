@@ -1,11 +1,9 @@
 from fastapi import HTTPException, status
-from sqlalchemy.orm import Session, joinedload
+from sqlalchemy.orm import Session
 from typing import List, Optional
-from datetime import datetime, timedelta
-from services import payment_service
+from datetime import timedelta
 import schemas
 import models
-import stripe
 
 def generate_invoice(order_id: int, db: Session) -> models.Invoice:
     order = db.query(models.Order).filter(models.Order.id == order_id).first()
@@ -73,6 +71,7 @@ def edit_invoice(invoice_id: int, invoice_update: schemas.InvoiceUpdate, db: Ses
 
     return db_invoice
 
+# Soft delete by changing the status to cancelled
 def delete_invoice(invoice_id: int, db: Session) -> None:
     db_invoice = db.query(models.Invoice).filter(models.Invoice.id == invoice_id).first()
     if not db_invoice:
