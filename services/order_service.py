@@ -1,14 +1,14 @@
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session, joinedload
 from typing import List, Optional
-from datetime import datetime
-from services import payment_service
+from datetime import datetime, timedelta
+from services import DHL_service
 import schemas
 import models
 import stripe
 
 
-def create_order(order: schemas.OrderCreate, db: Session) -> models.Order:
+async def create_order(order: schemas.OrderCreate, db: Session) -> models.Order:
     db_client = db.query(models.Client).filter(models.Client.id == order.client_id).first()
     if not db_client:
         raise HTTPException(
@@ -58,14 +58,14 @@ def create_order(order: schemas.OrderCreate, db: Session) -> models.Order:
 
     try:
         payment_intent = stripe.PaymentIntent.create(
-            amount=int(total_amount * 100),  # Convert to cents
-            currency="usd",  # Change to the desired currency
-            metadata={"order_id": new_order.id}  # Store order_id as metadata
+            amount=int(total_amount * 100),  
+            currency="usd",  
+            metadata={"order_id": new_order.id} 
         )
-        new_order.payment_intent_id = payment_intent.id  # Save payment_intent_id in the order record
+        new_order.payment_intent_id = payment_intent.id  
         db.commit()
     except stripe.error.StripeError as e:
-        db.rollback()  # If there's an error with Stripe, rollback the transaction
+        db.rollback()  
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error creating PaymentIntent: {str(e)}"
@@ -75,6 +75,17 @@ def create_order(order: schemas.OrderCreate, db: Session) -> models.Order:
         order_product.order_id = new_order.id 
 
     db.add_all(order_products)
+    db.commit()
+
+    tracking_number = await DHL_service.track_dhl_shipment(order_id=new_order.id)
+    shipment = models.Shipment(
+        order_id=new_order.id,
+        tracking_number=tracking_number,
+        status=models.ShipmentStatusEnum.PENDING,
+        estimated_delivery_date=datetime.utc() + timedelta(days=30)
+    )
+
+    db.add(shipment)
     db.commit()
 
     return schemas.OrderResponse(
