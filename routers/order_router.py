@@ -20,11 +20,11 @@ def get_orders(
     return order_service.get_orders(db=db, skip=skip, limit=limit)
 
 @router.post("/orders/", status_code=status.HTTP_201_CREATED)
-def create_order(
+async def create_order(
     order: schemas.OrderCreate,
     db: Session = Depends(get_db)
 ):
-    return order_service.create_order(db=db, order=order)
+    return await order_service.create_order(db=db, order=order)
 
 @router.put("/order/{order_id}/product/", response_model=schemas.OrderResponse)
 def edit_order(
