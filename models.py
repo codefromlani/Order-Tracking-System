@@ -14,6 +14,7 @@ class Vendor(Base):
     phone_number = Column(String)
     address = Column(String)
     type = Column(String)
+    is_deleted = Column(Boolean, default=False)
 
     products = relationship("Product", back_populates="vendor")
 
@@ -29,7 +30,8 @@ class Product(Base):
     price = Column(Float, nullable=False)
     stock = Column(Integer, default=0)
     category = Column(String)
-    vendor_id = Column(Integer, ForeignKey("vendors.id"), nullable=False)
+    vendor_id = Column(Integer, ForeignKey("vendors.id", ondelete="SET NULL"))
+    is_deleted = Column(Boolean, default=False)
 
     vendor = relationship("Vendor", back_populates="products")
 
@@ -42,6 +44,7 @@ class Client(Base):
     name = Column(String, nullable=False, index=True)
     email = Column(String, unique=True, nullable=False, index=True)
     phone_number = Column(String)
+    is_deleted = Column(Boolean, default=False)
 
     orders = relationship("Order", back_populates="client")
 
@@ -60,7 +63,7 @@ class OrderStatusEnum(str, Enum):
 class Order(Base):
     __tablename__ = "orders"
     id = Column(Integer, primary_key=True, index=True)
-    client_id = Column(Integer, ForeignKey("clients.id"), nullable=False)
+    client_id = Column(Integer, ForeignKey("clients.id", ondelete="SET NULL"))
     status = Column(SQLAlchemyEnum(OrderStatusEnum), nullable=False, index=True, default=OrderStatusEnum.PENDING)
     created_at = Column(DateTime, default=datetime.utcnow)
     total_amount = Column(Float, nullable=False)
@@ -165,7 +168,7 @@ class OrderProduct(Base):
     __tablename__ = "order_product"
     id = Column(Integer, primary_key=True, index=True)
     order_id = Column(Integer, ForeignKey("orders.id"), nullable=False)
-    product_id = Column(Integer, ForeignKey("products.id"), nullable=False)
+    product_id = Column(Integer, ForeignKey("products.id", ondelete="SET NULL"))
     quantity = Column(Integer, default=1, nullable=False)
     price = Column(Float, nullable=False)
 
