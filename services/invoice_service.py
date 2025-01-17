@@ -21,7 +21,6 @@ def generate_invoice(order_id: int, db: Session) -> models.Invoice:
     
     else:
         new_invoice = models.Invoice(
-            id=models.Invoice.id,
             order_id=order_id,
             amount=order.total_amount,
             status=models.InvoiceStatusEnum.PAID,

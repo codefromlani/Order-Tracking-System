@@ -1,10 +1,9 @@
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends
 from services import invoice_service
 from sqlalchemy.orm import Session
-from typing import List, Optional
+from typing import List
 from database import get_db
 import schemas
-import models
 
 
 router = APIRouter(

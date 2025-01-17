@@ -4,7 +4,6 @@ from sqlalchemy.orm import Session
 from typing import List, Optional
 from database import get_db
 import schemas
-import models
 
 
 router = APIRouter(
@@ -20,11 +19,11 @@ def get_orders(
     return order_service.get_orders(db=db, skip=skip, limit=limit)
 
 @router.post("/orders/", status_code=status.HTTP_201_CREATED)
-async def create_order(
+def create_order(
     order: schemas.OrderCreate,
     db: Session = Depends(get_db)
 ):
-    return await order_service.create_order(db=db, order=order)
+    return order_service.create_order(db=db, order=order)
 
 @router.put("/order/{order_id}/product/", response_model=schemas.OrderResponse)
 def edit_order(

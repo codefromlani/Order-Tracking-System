@@ -14,6 +14,12 @@ def create_shipments(order_id: int, db: Session):
             detail="Order not found"
         )
     
+    if order.status == schemas.OrderStatusEnum.SHIPPED:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Order has already been shipped"
+        )
+    
     if order.status != schemas.OrderStatusEnum.APPROVED:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, 
@@ -31,9 +37,19 @@ def create_shipments(order_id: int, db: Session):
         estimated_delivery_date=estimated_delivery_date
     )
 
+    order.status = schemas.OrderStatusEnum.SHIPPED
+
     db.add(shipment)
     db.commit()
     db.refresh(shipment)
+
+    new_history = models.OrderHistory(
+        order_id=order.id,
+        status=order.status,
+        changed_at=datetime.utcnow()
+    )
+    db.add(new_history)
+    db.commit()
 
     return {
     "message": "Shipment created successfully",
@@ -53,7 +69,7 @@ def track_shipments(order_id: int, db: Session):
             detail="Order not found"
         )
     
-    shipment = db.query(models.Shipment).filter(models.Shipment.tracking_number).first()
+    shipment = db.query(models.Shipment).filter(models.Shipment.order_id == order_id).first()
     if not shipment:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -97,4 +113,3 @@ def update_shipment(order_id: int, shipment_update: schemas.ShipmentUpdate, db: 
         "estimated_delivery_date": shipment.estimated_delivery_date
     }
 }
-#8faf8d87-b7b9-470d-bb32-99dbea4fa5cd

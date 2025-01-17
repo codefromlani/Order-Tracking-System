@@ -1,7 +1,7 @@
 import stripe
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
-from typing import List, Optional
+from datetime import datetime
 import models
 import schemas
 import os
@@ -43,6 +43,16 @@ def update_order_status_to_approved(order_id: int, payment_intent_id: str, db: S
     verify_payment(payment_intent_id=payment_intent_id, db=db)
    
     db_order.status = schemas.OrderStatusEnum.APPROVED
+    db.add(db_order)
+    db.commit()
+    db.refresh(db_order)
+
+    new_history = models.OrderHistory(
+        order_id=db_order.id,
+        status=db_order.status,
+        changed_at=datetime.utcnow()
+    )
+    db.add(new_history)
     db.commit()
 
     return {"message": "Order approved successfully"}

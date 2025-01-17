@@ -18,7 +18,8 @@ def create_client(client: schemas.ClientCreate, db: Session) -> models.Client:
     new_client = models.Client(
         name=client.name,
         email=client.email,
-        phone_number=client.phone_number
+        phone_number=client.phone_number,
+        is_deleted=client.is_deleted
     )
 
     db.add(new_client)
@@ -58,18 +59,23 @@ def update_client(client_id: int, client_update: schemas.ClientUpdate, db: Sessi
 
     return db_client
 
-def delete_client(client_id: int, db: Session) -> None:
-    db_client = db.query(models.Client).filter(models.Client.id == client_id).first()
-    if not db_client:
+#Soft delete because client cannot be empty in order table
+def delete_client(client_id: int, db: Session):
+    db_client = db.query(models.Client).filter(
+        models.Client.id == client_id, models.Client.is_deleted == False).first()
+    
+    if db_client:
+        db_client.is_deleted = True
+        for order in db_client.orders:
+            order.client_id = None
+        db.commit()
+        return {"message": "Client marked as deleted and orders updated"}
+    
+    else:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
+            status_code=status.HTTP_404_NOT_FOUND, 
             detail="Client not found"
         )
-    
-    db.delete(db_client)
-    db.commit()
-
-    return {"message": "Client deleted successfully"}
 
 def client_order_history(client_id: int, db: Session) -> List[schemas.ClientOrderResponse]:
     """Retrieve order history for a specific client including related products"""

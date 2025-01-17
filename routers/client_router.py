@@ -33,7 +33,7 @@ def update_client(
 ):
     return client_service.update_client(client_id=client_id, client_update=client_update, db=db)
 
-@router.delete("/clients/{client_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/clients/{client_id}")
 def delete_client(
     client_id: int,
     db: Session = Depends(get_db)

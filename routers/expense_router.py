@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, status
 from services import expense_service
 from sqlalchemy.orm import Session
-from typing import List, Optional
+from typing import Optional
 from database import get_db
 from datetime import datetime
 import schemas
@@ -56,7 +56,7 @@ def update_expense(
 ):
     return expense_service.update_expense(expense_id=expense_id, expense_update=expense_update, db=db)
 
-@router.delete("/expenses/{expense_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/expenses/{expense_id}")
 def delete_expense(
     expense_id: int,
     db: Session = Depends(get_db)

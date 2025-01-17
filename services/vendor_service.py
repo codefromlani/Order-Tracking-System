@@ -22,7 +22,8 @@ def create_vendor(vendor: schemas.VendorCreate, db: Session) -> models.Vendor:
         email=vendor.email,
         phone_number=vendor.phone_number,
         address=vendor.address,
-        type=vendor.type
+        type=vendor.type,
+        is_deleted = vendor.is_deleted
     )
 
     db.add(new_vendor)
@@ -65,12 +66,21 @@ def update_vendor(vendor_id: int, vendor_update: schemas.VendorUpdate, db: Sessi
 
 def delete_vendor(vendor_id: int, db: Session) -> None:
     db_vendor = db.query(models.Vendor).filter(models.Vendor.id == vendor_id).first()
-    if not db_vendor:
+
+    if db_vendor:
+        db_vendor.is_deleted = True
+
+        for vendor in db_vendor.products:
+            vendor.vendor_id = None
+
+        db.commit()
+
+        return {"message": "Vendor marked as deleted and products updated"}
+    
+    else:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Vendor Not found"
         )
-    db.delete(db_vendor)
-    db.commit()
 
-    return {"message": "Vendor deleted success"}
+    

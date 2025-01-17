@@ -1,20 +1,25 @@
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session, joinedload
 from typing import List, Optional
-from datetime import datetime, timedelta
-from services import DHL_service
+from datetime import datetime
 import schemas
 import models
 import stripe
 
 
-async def create_order(order: schemas.OrderCreate, db: Session) -> models.Order:
+def create_order(order: schemas.OrderCreate, db: Session) -> models.Order:
     db_client = db.query(models.Client).filter(models.Client.id == order.client_id).first()
     if not db_client:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Client not found"
         )
+    
+    if db_client.is_deleted:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="client has been deleted"
+            )
     
     total_amount = 0.0
 
@@ -26,6 +31,12 @@ async def create_order(order: schemas.OrderCreate, db: Session) -> models.Order:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"Product with ID {item.product_id} not found"
+            )
+        
+        if db_product.is_deleted:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Product {db_product.name} has been deleted"
             )
         
         if db_product.stock < item.quantity:
@@ -75,17 +86,6 @@ async def create_order(order: schemas.OrderCreate, db: Session) -> models.Order:
         order_product.order_id = new_order.id 
 
     db.add_all(order_products)
-    db.commit()
-
-    tracking_number = await DHL_service.track_dhl_shipment(order_id=new_order.id)
-    shipment = models.Shipment(
-        order_id=new_order.id,
-        tracking_number=tracking_number,
-        status=models.ShipmentStatusEnum.PENDING,
-        estimated_delivery_date=datetime.utc() + timedelta(days=30)
-    )
-
-    db.add(shipment)
     db.commit()
 
     return schemas.OrderResponse(
@@ -145,7 +145,14 @@ def edit_order(db: Session, order_id: int, order_update: schemas.OrderUpdate) ->
     db_product = db.query(models.Product).filter(models.Product.id == order_update.product_id).first()
     if not db_product:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Product not found"
+        )
+    
+    if db_product.is_deleted:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Product has been deleted"
         )
     
     total_amount = db_order.total_amount

@@ -33,7 +33,7 @@ def update_vendor(
 ):
     return vendor_service.update_vendor(vendor_id=vendor_id, vendor_update=vendor_update, db=db)
 
-@router.delete("/vendors/{vendor_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/vendors/{vendor_id}")
 def delete_vendor(
     vendor_id: int,
     db: Session = Depends(get_db)
